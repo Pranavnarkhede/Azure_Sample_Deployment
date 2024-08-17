@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Object Detection with YOLOv8</title>
+        <style>
+         body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        #upload-form {
+            margin-bottom: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        #file {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #error-message {
+            color: #e74c3c;
+            margin-bottom: 20px;
+        }
+        #result-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .loading:after {
+            content: '...';
+            animation: dots 1s steps(5, end) infinite;
+        }
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60% { content: '...'; }
+            80%, 100% { content: ''; }
+        }
+        </style>
+</head>
+<body>
+    <h1>Upload Image for Object Detection</h1>
+    <form id="upload-form" enctype="multipart/form-data">
+        <input type="file" id="file" name="file" accept="image/*">
+        <button type="submit">Upload and Predict</button>
+    </form>
+    <h2>Detected Objects</h2>
+    <div id="results">
+        <img id="result-image" src="" alt="Result Image" style="max-width: 100%; height: auto;">
+    </div>
+
+    <script>
+      document.getElementById('upload-form').onsubmit = async function(event) {
+    event.preventDefault();
+    let formData = new FormData();
+    formData.append('file', document.getElementById('file').files[0]);
+
+    try {
+        let response = await fetch('/predict', {
+            method: 'POST',
+            body: formData
+        });
+        if (response.ok) {
+            let data = await response.json();
+            if (data.image) {
+                document.getElementById('result-image').src = 'data:image/png;base64,' + data.image;
+                document.getElementById('error-message').textContent = '';
+            } else {
+                document.getElementById('error-message').textContent = 'Error: No image data received';
+                document.getElementById('result-image').src = '';
+            }
+        } else {
+            let errorData = await response.json();
+            document.getElementById('error-message').textContent = errorData.error;
+            document.getElementById('result-image').src = '';
+        }
+    } catch (error) {
+        document.getElementById('error-message').textContent = 'An error occurred while processing the request.';
+        console.error('Error:', error);
+    }
+};
+    </script>
+</body>
+</html>
